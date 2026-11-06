@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Papaz Kimde 🃏</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="screen" id="lobby-screen">
+      <header class="game-header">
+        <h1><span class="crown">🃏</span> Papaz Kimde <span class="crown">🃏</span></h1>
+        <p class="subtitle">Papaz Kaçtı • Çok Oyunculu</p>
+      </header>
+      <div class="card-container">
+        <div class="mode-tabs">
+          <button class="tab-btn active" data-mode="create">🎮 Oda Kur</button>
+          <button class="tab-btn" data-mode="join">🔗 Katıl</button>
+        </div>
+        <div class="tab-panel active" id="create-panel">
+          <div class="input-group"><label>İsmin</label><input type="text" id="create-name" placeholder="Örn: Ahmet" maxlength="16" required></div>
+          <div class="settings-row">
+            <div class="input-group"><label>Max Oyuncu</label><select id="max-players"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option></select></div>
+            <div class="input-group"><label>Min Oyuncu</label><select id="min-players"><option value="3" selected>3</option><option value="4">4</option></select></div>
+          </div>
+          <button class="btn btn-primary btn-lg" id="create-btn">Oda Oluştur</button>
+        </div>
+        <div class="tab-panel" id="join-panel">
+          <div class="input-group"><label>İsmin</label><input type="text" id="join-name" placeholder="Örn: Ayşe" maxlength="16" required></div>
+          <div class="input-group"><label>Oda Kodu</label><input type="text" id="room-code" placeholder="Örn: A7K9M2" maxlength="6" style="text-transform:uppercase; letter-spacing: 2px;" required></div>
+          <button class="btn btn-primary btn-lg" id="join-btn">Odaya Katıl</button>
+        </div>
+      </div>
+      <footer class="game-footer"><p>💡 1 Kral (Papaz) var, kalan 3 kral desteden çıkarıldı</p><p>📱 Linki arkadaşlarına gönder, hemen oynayın</p></footer>
+    </div>
+    <div class="screen hidden" id="waiting-screen">
+      <header class="game-header"><h1>🃏 Papaz Kimde</h1><div class="room-code-display" id="room-code-display">KOD: <span id="room-code-value">-</span></div></header>
+      <div class="players-list" id="players-list"></div>
+      <div class="waiting-actions" id="waiting-actions"></div>
+      <button class="btn btn-secondary" id="leave-btn">Odadan Çık</button>
+    </div>
+    <div class="screen hidden" id="game-screen">
+      <header class="game-header compact"><div class="room-info"><span class="room-code" id="game-room-code">KOD: -</span><span class="turn-indicator" id="turn-indicator">Sıra: -</span></div><button class="btn btn-icon" id="menu-btn" aria-label="Menü">☰</button></header>
+      <div class="opponents-area" id="opponents-area"></div>
+      <div class="game-log" id="game-log"><div class="log-header">📜 Oyun Geçmişi</div><div class="log-content" id="log-content"></div></div>
+      <div class="my-hand-area"><div class="hand-label">Senin Kartların (<span id="my-card-count">0</span>)</div><div class="hand-cards" id="my-hand"></div><div class="hand-hint" id="hand-hint">Sıra sende: Sağındaki oyuncudan kart çek</div><button class="btn btn-primary btn-lg" id="draw-btn" disabled>🃏 Kart Çek</button></div>
+    </div>
+    <div class="modal hidden" id="game-over-modal"><div class="modal-content"><div class="modal-icon" id="modal-icon">🏆</div><h2 id="modal-title">Oyun Bitti!</h2><div class="results" id="results"></div><div class="modal-actions"><button class="btn btn-secondary" id="new-game-btn">🔄 Yeni Oyun</button><button class="btn btn-primary" id="share-btn">📋 Linki Kopyala</button></div></div></div>
+    <div class="modal hidden" id="settings-modal"><div class="modal-content small"><h3>⚙️ Ayarlar</h3><div class="setting-item"><label><input type="checkbox" id="sound-toggle" checked> Ses Efektleri</label></div><div class="setting-item"><label><input type="checkbox" id="vibrate-toggle" checked> Titreme</label></div><div class="setting-item"><label><input type="checkbox" id="animations-toggle" checked> Animasyonlar</label></div><button class="btn btn-danger" id="leave-game-btn">Odadan Çık</button><button class="btn btn-secondary" id="close-settings-btn">Kapat</button></div></div>
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
