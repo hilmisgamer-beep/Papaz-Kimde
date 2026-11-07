@@ -203,6 +203,12 @@ function renderLog(logs) {
 function addLog(msg) {
   const container = document.getElementById('log-content');
   const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = fmtLog(msg);
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  if (settings.sound) playSound('log');
+}
 
 function drawCard() {
   if (!myTurn || !currentRoom) return;
@@ -277,12 +283,6 @@ function playSound(type) {
   } catch (e) { /* ses desteklenmiyor */ }
 }
 
-  div.className = 'log-entry';
-  div.innerHTML = fmtLog(msg);
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-  if (settings.sound) playSound('log');
-}
 function updateHint(me, room) {
   const hint = document.getElementById('hand-hint');
   if (room.state === 'finished') {
