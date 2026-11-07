@@ -181,17 +181,23 @@ function renderOpponents(room) {
   });
 
   if (myTurn && targetPlayer) {
-    container.querySelectorAll('.opponent-card.clickable').forEach(el => {
-      el.onclick = () => {
-        const idx = parseInt(el.dataset.index, 10);
+    // Event delegation - parent container handles clicks
+    const cardsWrapper = container.querySelector('.opponent.clickable-target .opponent-cards');
+    if (cardsWrapper) {
+      // Remove old handler first
+      cardsWrapper.onclick = null;
+      cardsWrapper.onclick = (e) => {
+        const card = e.target.closest('.opponent-card.clickable');
+        if (!card) return;
+        const idx = parseInt(card.dataset.index, 10);
         selectedOpponentCardIndex = idx;
         // Visual selection
-        container.querySelectorAll('.opponent-card.clickable').forEach(c => c.classList.remove('selected-opponent-card'));
-        el.classList.add('selected-opponent-card');
+        cardsWrapper.querySelectorAll('.opponent-card.clickable').forEach(c => c.classList.remove('selected-opponent-card'));
+        card.classList.add('selected-opponent-card');
         const btn = document.getElementById('draw-btn');
         if (btn) { btn.disabled = false; btn.textContent = '🃏 Seç'; }
       };
-    });
+    }
   }
 }
 
@@ -216,6 +222,10 @@ function shuffleOpponentCards() {
     cardsWrapper.appendChild(card);
   });
   
+  // Re-attach click handler (event delegation handles this automatically since it's on parent)
+  // But we need to make sure the handler is still attached
+  // The handler is on the parent, so it will work automatically
+  
   // Visual feedback
   if (settings.vibrate && navigator.vibrate) navigator.vibrate(50);
   if (settings.sound) playSound('log');
@@ -229,9 +239,9 @@ function renderMyHand(me, showAll) {
     div.dataset.rank = card.rank;
     div.dataset.index = i;
     const label = card.rank === '10' ? '10' : card.rank[0];
-    div.innerHTML = '<div class="corner top"><span>' + label + '</span><span class="suit">' + card.suit + '</span></div>' +
-      '<div class="center"><span class="suit" style="font-size:2.5rem">' + card.suit + '</span></div>' +
-      '<div class="corner bottom"><span>' + label + '</span><span class="suit">' + card.suit + '</span></div>';
+    div.innerHTML = '<div class="corner top"><span class="rank-label">' + label + '</span><span class="suit-symbol">' + card.suit + '</span></div>' +
+      '<div class="center"><span class="suit-symbol main-suit">' + card.suit + '</span></div>' +
+      '<div class="corner bottom"><span class="rank-label">' + label + '</span><span class="suit-symbol">' + card.suit + '</span></div>';
     if (showAll || (myTurn && !me.finishedAt)) div.addEventListener('click', () => selectCard(div));
     container.appendChild(div);
   });
