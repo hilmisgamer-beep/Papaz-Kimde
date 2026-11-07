@@ -257,8 +257,8 @@ io.on('connection', (socket) => {
     else socket.emit('error', { message: result.error });
   });
 
-  socket.on('draw-card', ({ roomId, playerId, cardIndex }) => {
-    // cardIndex: client'ten gelen kart indeksi (seçilen kart)
+  socket.on('draw-card', async ({ roomId, playerId, cardIndex }) => {
+    // cardIndex: client'ten gelen kart indeksi (seçilen kart) - v7
     const result = playTurn(roomId, playerId, 'draw', { cardIndex });
     if (result.success) {
       broadcastRoom(result.room, 'turn-played', { log: result.log });
