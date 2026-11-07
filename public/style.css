@@ -13,6 +13,11 @@
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); display: inline-block; }
 .status-dot.ready { background: var(--success); box-shadow: 0 0 8px var(--success); }
 .status-dot.host { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.status-dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.status-dot.disconnected { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+.conn-status { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: .7rem; color: var(--text-dim); }
+.conn-status.connected span:last-child { color: var(--success); }
+.conn-status.disconnected span:last-child { color: var(--danger); }
 .waiting-actions { padding: 0 16px 16px; }
 .room-code-display { font-size: 1.3rem; font-weight: 800; color: var(--gold); letter-spacing: 3px; padding: 10px 16px; background: rgba(255,215,0,.1); border: 1px solid rgba(255,215,0,.3); border-radius: var(--radius-sm); margin-bottom: 8px; }
 #waiting-screen > .btn-secondary { margin: 0 16px 20px; width: calc(100% - 32px); }
