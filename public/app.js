@@ -26,14 +26,26 @@ function loadSettings() { const s = JSON.parse(localStorage.getItem('papaz_setti
 function saveSettings() { settings.sound = document.getElementById('sound-toggle').checked; settings.vibrate = document.getElementById('vibrate-toggle').checked; settings.animations = document.getElementById('animations-toggle').checked; localStorage.setItem('papaz_settings', JSON.stringify(settings)); }
 function registerSW() { if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 function showScreen(name) { Object.values(screens).forEach(s => s.classList.remove('active')); screens[name].classList.add('active'); }
-function createRoom() { const name = document.getElementById('create-name').value.trim(); if(!name) return toast('İsim gir', 'error'); socket.emit('create-room', { playerName: name, settings: { maxPlayers: +document.getElementById('max-players').value, minPlayers: +document.getElementById('min-players').value } }); }
-function joinRoom() { const name = document.getElementById('join-name').value.trim(); const code = document.getElementById('room-code').value.trim().toUpperCase(); if(!name || !code) return toast('İsim ve kod gir', 'error'); socket.emit('join-room', { roomCode: code, playerName: name }); }
+function createRoom() {
+  if (!socket.connected) return toast('Sunucuya bağlanılıyor, lütfen bekleyin...', 'error');
+  const name = document.getElementById('create-name').value.trim();
+  if(!name) return toast('İsim gir', 'error');
+  socket.emit('create-room', { playerName: name, settings: { maxPlayers: +document.getElementById('max-players').value, minPlayers: +document.getElementById('min-players').value } });
+}
+function joinRoom() {
+  if (!socket.connected) return toast('Sunucuya bağlanılıyor, lütfen bekleyin...', 'error');
+  const name = document.getElementById('join-name').value.trim();
+  const code = document.getElementById('room-code').value.trim().toUpperCase();
+  if(!name || !code) return toast('İsim ve kod gir', 'error');
+  socket.emit('join-room', { roomCode: code, playerName: name });
+}
 function leaveRoom() { if(currentRoom && currentPlayerId) { socket.emit('leave-room', { roomId: currentRoom, playerId: currentPlayerId }); } resetGame(); showScreen('lobby'); }
 function resetGame() { currentRoom = null; currentPlayerId = null; myTurn = false; }
 
 function setupSocket() {
-  socket.on('connect', () => console.log('Connected to server'));
-  socket.on('disconnect', () => toast('Baglanti kesildi', 'error'));
+  socket.on('connect', () => { console.log('Connected to server'); updateConnStatus(true); });
+  socket.on('disconnect', () => { updateConnStatus(false); toast('Baglanti kesildi', 'error'); });
+  socket.on('connect_error', (e) => { updateConnStatus(false); toast('Baglanti hatasi: ' + e.message, 'error'); });
   socket.on('error', data => toast(data.message, 'error'));
   socket.on('room-created', data => { currentRoom = data.roomCode; currentPlayerId = data.playerId; showWaitingScreen(data.room); });
   socket.on('room-joined', data => { currentRoom = data.room.id; currentPlayerId = data.playerId; showWaitingScreen(data.room); });
@@ -43,6 +55,22 @@ function setupSocket() {
   socket.on('game-started', data => { showGameScreen(data.room); });
   socket.on('turn-played', data => { updateGameScreen(data.room, data.log); });
   socket.on('game-ended', data => { showGameOver(data.room); });
+}
+
+function updateConnStatus(connected) {
+  const el = document.getElementById('conn-status');
+  const dot = el?.querySelector('.status-dot');
+  const text = el?.querySelector('span:last-child');
+  if (!el || !dot || !text) return;
+  if (connected) {
+    el.classList.add('connected'); el.classList.remove('disconnected');
+    dot.classList.add('connected'); dot.classList.remove('disconnected');
+    text.textContent = 'Bağlı ✓';
+  } else {
+    el.classList.add('disconnected'); el.classList.remove('connected');
+    dot.classList.add('disconnected'); dot.classList.remove('connected');
+    text.textContent = 'Bağlantı kesildi';
+  }
 }
 
 function showWaitingScreen(room) {
