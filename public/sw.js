@@ -1,5 +1,5 @@
-const CACHE = 'papaz-kimde-v3';
-const ASSETS = ['/', '/index.html', '/style.css?v=3', '/app.js?v=3', '/manifest.json'];
+const CACHE = 'papaz-kimde-v4';
+const ASSETS = ['/', '/index.html', '/style.css?v=4', '/app.js?v=4', '/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {}));
