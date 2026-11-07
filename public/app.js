@@ -51,9 +51,12 @@ function leaveRoom() { if(currentRoom && currentPlayerId) { socket.emit('leave-r
 function resetGame() { currentRoom = null; currentPlayerId = null; myTurn = false; }
 
 function setupSocket() {
-  socket.on('connect', () => { console.log('Connected to server'); updateConnStatus(true); });
-  socket.on('disconnect', () => { updateConnStatus(false); toast('Baglanti kesildi', 'error'); });
-  socket.on('connect_error', (e) => { updateConnStatus(false); toast('Baglanti hatasi: ' + e.message, 'error'); });
+  socket.on('connect', () => { console.log('[SOCKET] Connected:', socket.id, 'transport:', socket.io.engine.transport.name); updateConnStatus(true); });
+  socket.on('disconnect', (reason) => { console.log('[SOCKET] Disconnected:', reason); updateConnStatus(false); toast('Baglanti kesildi: ' + reason, 'error'); });
+  socket.on('connect_error', (e) => { console.log('[SOCKET] Connect error:', e.message); updateConnStatus(false); toast('Baglanti hatasi: ' + e.message, 'error'); });
+  socket.on('connect_timeout', () => { console.log('[SOCKET] Connect timeout'); updateConnStatus(false); toast('Baglanti zaman asimi', 'error'); });
+  socket.io.engine.on('upgrade', (transport) => { console.log('[SOCKET] Upgraded to:', transport.name); });
+  socket.io.engine.on('upgradeError', (err) => { console.log('[SOCKET] Upgrade error:', err.message); });
   socket.on('error', data => toast(data.message, 'error'));
   socket.on('room-created', data => { currentRoom = data.roomCode; currentPlayerId = data.playerId; showWaitingScreen(data.room); });
   socket.on('room-joined', data => { currentRoom = data.room.id; currentPlayerId = data.playerId; showWaitingScreen(data.room); });
