@@ -257,8 +257,8 @@ io.on('connection', (socket) => {
     else socket.emit('error', { message: result.error });
   });
 
-  socket.on('draw-card', ({ roomId, playerId }) => {
-    const result = playTurn(roomId, playerId, 'draw');
+  socket.on('draw-card', ({ roomId, playerId, cardIndex }) => {
+    const result = playTurn(roomId, playerId, 'draw', { cardIndex });
     if (result.success) {
       broadcastRoom(result.room, 'turn-played', { log: result.log });
       if (result.room.state === 'finished') broadcastRoom(result.room, 'game-ended');
