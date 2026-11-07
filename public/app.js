@@ -8,7 +8,7 @@ const socket = io({
   timeout: 20000,
   forceNew: true
 });
-let currentRoom = null, currentPlayerId = null, myTurn = false, settings = { sound: true, vibrate: true, animations: true };
+let currentRoom = null, currentPlayerId = null, myTurn = false, selectedOpponentCardIndex = -1, settings = { sound: true, vibrate: true, animations: true };
 
 const screens = { lobby: document.getElementById('lobby-screen'), waiting: document.getElementById('waiting-screen'), game: document.getElementById('game-screen') };
 const tabs = document.querySelectorAll('.tab-btn'), panels = document.querySelectorAll('.tab-panel');
@@ -22,12 +22,13 @@ function setupButtons() {
   document.getElementById('create-btn').onclick = createRoom;
   document.getElementById('join-btn').onclick = joinRoom;
   document.getElementById('leave-btn').onclick = leaveRoom;
-  document.getElementById('draw-btn').onclick = drawCard;
+  document.getElementById('draw-btn').onclick = () => drawCard(selectedOpponentCardIndex);
   document.getElementById('new-game-btn').onclick = newGame;
   document.getElementById('share-btn').onclick = shareLink;
   document.getElementById('menu-btn').onclick = toggleSettings;
   document.getElementById('close-settings-btn').onclick = toggleSettings;
   document.getElementById('leave-game-btn').onclick = leaveRoom;
+  document.getElementById('shuffle-btn').onclick = shuffleOpponentCards;
   ['sound-toggle','vibrate-toggle','animations-toggle'].forEach(id => { const el = document.getElementById(id); if(el) el.onchange = saveSettings; });
 }
 function loadSettings() { const s = JSON.parse(localStorage.getItem('papaz_settings')||'{}'); settings = {sound:true,vibrate:true,animations:true,...s}; ['sound-toggle','vibrate-toggle','animations-toggle'].forEach(id => { const el=document.getElementById(id); if(el) el.checked = settings[id.replace('-toggle','')]; }); }
@@ -48,7 +49,7 @@ function joinRoom() {
   socket.emit('join-room', { roomCode: code, playerName: name });
 }
 function leaveRoom() { if(currentRoom && currentPlayerId) { socket.emit('leave-room', { roomId: currentRoom, playerId: currentPlayerId }); } resetGame(); showScreen('lobby'); }
-function resetGame() { currentRoom = null; currentPlayerId = null; myTurn = false; }
+function resetGame() { currentRoom = null; currentPlayerId = null; myTurn = false; selectedOpponentCardIndex = -1; }
 
 function setupSocket() {
   socket.on('connect', () => { console.log('[SOCKET] Connected:', socket.id, 'transport:', socket.io.engine.transport.name); updateConnStatus(true); });
@@ -151,22 +152,73 @@ function renderOpponents(room) {
   const container = document.getElementById('opponents-area');
   container.innerHTML = '';
   const others = [...room.players].filter(p => p.id !== currentPlayerId).sort((a, b) => a.position - b.position);
+  const myTurn = room.turnOrder[room.currentTurn] === currentPlayerId && room.state === 'playing' && !room.players.find(p => p.id === currentPlayerId).finishedAt;
+  const targetPlayer = others.find(p => !p.finishedAt && p.hand.length > 0);
+
   others.forEach(p => {
     const div = document.createElement('div');
     const isTurn = room.turnOrder[room.currentTurn] === p.id;
-    div.className = 'opponent' + (p.finishedAt ? ' finished' : '') + (isTurn ? ' current-turn' : '');
+    const isTarget = (p === targetPlayer);
+    const clickable = myTurn && isTarget;
+    div.className = 'opponent' + (p.finishedAt ? ' finished' : '') + (isTurn ? ' current-turn' : '') + (clickable ? ' clickable-target' : '');
     let cards = '';
     if (settings.animations) {
       const n = Math.min(p.hand.length, 6);
-      for (let i = 0; i < n; i++) cards += '<div class="opponent-card"></div>';
+      for (let i = 0; i < n; i++) {
+        if (clickable) {
+          cards += '<div class="opponent-card clickable" data-index="' + i + '" style="cursor:pointer;border:2px solid var(--gold);"></div>';
+        } else {
+          cards += '<div class="opponent-card"></div>';
+        }
+      }
       if (p.hand.length > 6) cards += '<div class="opponent-card" style="opacity:.5">+' + (p.hand.length - 6) + '</div>';
     }
     div.innerHTML = '<div class="opponent-avatar">' + p.name[0].toUpperCase() + '</div>' +
-      '<div class="opponent-name">' + esc(p.name) + (p.finishedAt ? ' &#10004;' : '') + '</div>' +
+      '<div class="opponent-name">' + esc(p.name) + (p.finishedAt ? ' &#10004;' : '') + (clickable ? ' <span style="color:var(--gold)">👈 Seç</span>' : '') + '</div>' +
       '<div class="opponent-card-count">' + p.hand.length + ' kart</div>' +
       '<div class="opponent-cards">' + cards + '</div>';
     container.appendChild(div);
   });
+
+  if (myTurn && targetPlayer) {
+    container.querySelectorAll('.opponent-card.clickable').forEach(el => {
+      el.onclick = () => {
+        const idx = parseInt(el.dataset.index, 10);
+        selectedOpponentCardIndex = idx;
+        // Visual selection
+        container.querySelectorAll('.opponent-card.clickable').forEach(c => c.classList.remove('selected-opponent-card'));
+        el.classList.add('selected-opponent-card');
+        const btn = document.getElementById('draw-btn');
+        if (btn) { btn.disabled = false; btn.textContent = '🃏 Seç'; }
+      };
+    });
+  }
+}
+
+function shuffleOpponentCards() {
+  if (!myTurn) return;
+  const container = document.getElementById('opponents-area');
+  const targetDiv = container.querySelector('.opponent.clickable-target');
+  if (!targetDiv) return;
+  
+  const cardsWrapper = targetDiv.querySelector('.opponent-cards');
+  const cards = Array.from(cardsWrapper.querySelectorAll('.opponent-card.clickable'));
+  
+  // Fisher-Yates shuffle
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  
+  // Update data-index and re-append in shuffled order
+  cards.forEach((card, i) => {
+    card.dataset.index = i;
+    cardsWrapper.appendChild(card);
+  });
+  
+  // Visual feedback
+  if (settings.vibrate && navigator.vibrate) navigator.vibrate(50);
+  if (settings.sound) playSound('log');
 }
 function renderMyHand(me, showAll) {
   const container = document.getElementById('my-hand');
@@ -210,9 +262,16 @@ function addLog(msg) {
   if (settings.sound) playSound('log');
 }
 
-function drawCard() {
+function drawCard(cardIndex) {
   if (!myTurn || !currentRoom) return;
-  socket.emit('draw-card', { roomId: currentRoom, playerId: currentPlayerId });
+  if (cardIndex === undefined || cardIndex < 0) {
+    if (selectedOpponentCardIndex === -1) return toast('Önce bir kart seç veya karıştır', 'error');
+    cardIndex = selectedOpponentCardIndex;
+  }
+  selectedOpponentCardIndex = -1;
+  const btn = document.getElementById('draw-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Seçiliyor...'; }
+  socket.emit('draw-card', { roomId: currentRoom, playerId: currentPlayerId, cardIndex });
   if (settings.sound) playSound('draw');
   if (settings.vibrate && navigator.vibrate) navigator.vibrate([50, 30, 50]);
 }
