@@ -50,7 +50,15 @@
       <header class="game-header compact"><div class="room-info"><span class="room-code" id="game-room-code">KOD: -</span><span class="turn-indicator" id="turn-indicator">Sıra: -</span></div><button class="btn btn-icon" id="menu-btn" aria-label="Menü">☰</button></header>
       <div class="opponents-area" id="opponents-area"></div>
       <div class="game-log" id="game-log"><div class="log-header">📜 Oyun Geçmişi</div><div class="log-content" id="log-content"></div></div>
-      <div class="my-hand-area"><div class="hand-label">Senin Kartların (<span id="my-card-count">0</span>)</div><div class="hand-cards" id="my-hand"></div><div class="hand-hint" id="hand-hint">Sıra sende: Sağındaki oyuncudan kart çek</div><button class="btn btn-primary btn-lg" id="draw-btn" disabled>🃏 Kart Çek</button></div>
+      <div class="my-hand-area">
+    <div class="hand-label">Senin Kartların (<span id="my-card-count">0</span>)</div>
+    <div class="hand-cards" id="my-hand"></div>
+    <div class="hand-hint" id="hand-hint">Sıra sende: Rakibin kartlarından birini seç</div>
+    <div class="hand-actions">
+      <button class="btn btn-secondary btn-sm" id="shuffle-btn" title="Rakip kartlarını karıştır">🔀 Karıştır</button>
+      <button class="btn btn-primary btn-lg" id="draw-btn" disabled>🃏 Seç</button>
+    </div>
+  </div>
     </div>
     <div class="modal hidden" id="game-over-modal"><div class="modal-content"><div class="modal-icon" id="modal-icon">🏆</div><h2 id="modal-title">Oyun Bitti!</h2><div class="results" id="results"></div><div class="modal-actions"><button class="btn btn-secondary" id="new-game-btn">🔄 Yeni Oyun</button><button class="btn btn-primary" id="share-btn">📋 Linki Kopyala</button></div></div></div>
     <div class="modal hidden" id="settings-modal"><div class="modal-content small"><h3>⚙️ Ayarlar</h3><div class="setting-item"><label><input type="checkbox" id="sound-toggle" checked> Ses Efektleri</label></div><div class="setting-item"><label><input type="checkbox" id="vibrate-toggle" checked> Titreme</label></div><div class="setting-item"><label><input type="checkbox" id="animations-toggle" checked> Animasyonlar</label></div><button class="btn btn-danger" id="leave-game-btn">Odadan Çık</button><button class="btn btn-secondary" id="close-settings-btn">Kapat</button></div></div>
