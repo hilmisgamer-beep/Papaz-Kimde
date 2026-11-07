@@ -258,6 +258,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('draw-card', ({ roomId, playerId, cardIndex }) => {
+    // cardIndex: client'ten gelen kart indeksi (seçilen kart)
     const result = playTurn(roomId, playerId, 'draw', { cardIndex });
     if (result.success) {
       broadcastRoom(result.room, 'turn-played', { log: result.log });
