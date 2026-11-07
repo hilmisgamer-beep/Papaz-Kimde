@@ -1,4 +1,8 @@
 node_modules/
 .env
+.deploy-token
 *.log
 .DS_Store
+head.html
+css_live.txt
+html_live.txt
