@@ -144,47 +144,54 @@ function startGame(roomId) {
 }
 
 
-function playTurn(roomId, playerId, action) {
+function playTurn(roomId, playerId, action, data) {
   const room = rooms.get(roomId);
   if (!room || room.state !== 'playing') return { success: false, error: 'Oyun aktif degil' };
   const currentId = room.turnOrder[room.currentTurn];
   if (currentId !== playerId) return { success: false, error: 'Sira sizde degil' };
   const player = room.players.get(playerId);
   if (!player || player.finishedAt) return { success: false, error: 'Oyunu bitirdiniz' };
-  if (action !== 'draw') return { success: false, error: 'Gecersiz islem' };
 
-  let targetIndex = (room.currentTurn + 1) % room.turnOrder.length;
-  let attempts = 0;
-  while (attempts < room.turnOrder.length) {
-    const t = room.players.get(room.turnOrder[targetIndex]);
-    if (t && !t.finishedAt && t.hand.length > 0) break;
-    targetIndex = (targetIndex + 1) % room.turnOrder.length; attempts++;
-  }
-  if (attempts >= room.turnOrder.length) return { success: false, error: 'Cekilecek oyuncu yok' };
+  if (action === 'draw') {
+    if (!data || typeof data.cardIndex !== 'number') return { success: false, error: 'Kart secilmeli' };
 
-  const target = room.players.get(room.turnOrder[targetIndex]);
-  const cardIndex = Math.floor(Math.random() * target.hand.length);
-  const drawn = target.hand.splice(cardIndex, 1)[0];
-  player.hand.push(drawn);
-  let msg = `${player.name}, ${target.name} isimli oyuncudan ${drawn.rank}${drawn.suit} cikti`;
-
-  const res = removePairs(player.hand);
-  player.hand = res.remaining;
-  if (res.removedPairs.length > 0) msg += ` ve ${res.removedPairs.length / 2} cift atti!`;
-  room.gameLog.push(msg);
-  player.hand.sort((a, b) => RANK_ORDER[a.rank] - RANK_ORDER[b.rank]);
-  checkFinishedPlayers(room);
-
-  if (room.state === 'playing') {
-    room.currentTurn = (room.currentTurn + 1) % room.turnOrder.length;
-    let skip = 0;
-    while (skip < room.turnOrder.length) {
-      const n = room.players.get(room.turnOrder[room.currentTurn]);
-      if (n && !n.finishedAt) break;
-      room.currentTurn = (room.currentTurn + 1) % room.turnOrder.length; skip++;
+    let targetIndex = (room.currentTurn + 1) % room.turnOrder.length;
+    let attempts = 0;
+    while (attempts < room.turnOrder.length) {
+      const t = room.players.get(room.turnOrder[targetIndex]);
+      if (t && !t.finishedAt && t.hand.length > 0) break;
+      targetIndex = (targetIndex + 1) % room.turnOrder.length; attempts++;
     }
+    if (attempts >= room.turnOrder.length) return { success: false, error: 'Cekilecek oyuncu yok' };
+
+    const target = room.players.get(room.turnOrder[targetIndex]);
+    if (data.cardIndex < 0 || data.cardIndex >= target.hand.length) {
+      return { success: false, error: 'Gecersiz kart indeksi' };
+    }
+
+    const drawn = target.hand.splice(data.cardIndex, 1)[0];
+    player.hand.push(drawn);
+    let msg = `${player.name}, ${target.name} isimli oyuncudan ${drawn.rank}${drawn.suit} secti`;
+
+    const res = removePairs(player.hand);
+    player.hand = res.remaining;
+    if (res.removedPairs.length > 0) msg += ` ve ${res.removedPairs.length / 2} cift atti!`;
+    room.gameLog.push(msg);
+    player.hand.sort((a, b) => RANK_ORDER[a.rank] - RANK_ORDER[b.rank]);
+    checkFinishedPlayers(room);
+
+    if (room.state === 'playing') {
+      room.currentTurn = (room.currentTurn + 1) % room.turnOrder.length;
+      let skip = 0;
+      while (skip < room.turnOrder.length) {
+        const n = room.players.get(room.turnOrder[room.currentTurn]);
+        if (n && !n.finishedAt) break;
+        room.currentTurn = (room.currentTurn + 1) % room.turnOrder.length; skip++;
+      }
+    }
+    return { success: true, room, log: msg };
   }
-  return { success: true, room, log: msg };
+  return { success: false, error: 'Gecersiz islem' };
 }
 
 function getPublicRoomState(room, viewerId) {
