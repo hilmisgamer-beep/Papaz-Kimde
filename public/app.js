@@ -1,5 +1,13 @@
 // Papaz Kimde - Frontend App
-const socket = io({ transports: ['websocket', 'polling'], reconnection: true, reconnectionAttempts: 5 });
+const socket = io({
+  transports: ['polling', 'websocket'],
+  reconnection: true,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000,
+  forceNew: true
+});
 let currentRoom = null, currentPlayerId = null, myTurn = false, settings = { sound: true, vibrate: true, animations: true };
 
 const screens = { lobby: document.getElementById('lobby-screen'), waiting: document.getElementById('waiting-screen'), game: document.getElementById('game-screen') };
